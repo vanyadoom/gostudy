@@ -13,7 +13,7 @@ type Wallet struct {
 	Balance float64
 }
 
-func (w *Wallet) Deposite(amount float64) {
+func (w *Wallet) Deposit(amount float64) {
 	w.Balance += amount
 }
 
@@ -55,7 +55,7 @@ func main() {
 			amount, _ := strconv.ParseFloat(strings.TrimSpace(scanner.Text()), 64)
 
 			if amount > 0 {
-				myWallet.Deposite(amount)
+				myWallet.Deposit(amount)
 				fmt.Println("✅ Кошелек успешно пополнен!")
 			} else {
 				fmt.Println("❌ Ошибка: Сумма должна быть больше нуля")
