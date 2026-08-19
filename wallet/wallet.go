@@ -4,12 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"time"
 )
+
+type Transaction struct {
+	Type   string
+	Amount float64
+	Date   time.Time
+}
 
 type Wallet struct {
 	filename string
 	Owner    string
 	Balance  float64
+	History  []Transaction
 }
 
 func NewWallet(owner string, startBalance float64, filename string) *Wallet {
@@ -17,6 +25,7 @@ func NewWallet(owner string, startBalance float64, filename string) *Wallet {
 		filename: filename,
 		Owner:    owner,
 		Balance:  startBalance,
+		History:  []Transaction{},
 	}
 }
 
@@ -44,6 +53,15 @@ func (w *Wallet) Load() error {
 
 func (w *Wallet) Deposit(amount float64) {
 	w.Balance += amount
+
+	tx := Transaction{
+		Type:   "Пополнение",
+		Amount: amount,
+		Date:   time.Now(),
+	}
+
+	w.History = append(w.History, tx)
+
 	_ = w.Save()
 }
 
@@ -52,6 +70,14 @@ func (w *Wallet) Withdraw(amount float64) bool {
 		return false
 	}
 	w.Balance -= amount
+
+	tx := Transaction{
+		Type:   "Снятие",
+		Amount: amount,
+		Date:   time.Now(),
+	}
+	w.History = append(w.History, tx)
+
 	_ = w.Save()
 	return true
 }
