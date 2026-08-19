@@ -12,7 +12,13 @@ import (
 
 func main() {
 
-	myWallet := wallet.NewWallet("Иван", 100.0)
+	myWallet := wallet.NewWallet("Иван", 100.0, "wallet.json")
+
+	err := myWallet.Load()
+	if err != nil {
+		fmt.Println("❌ Критическая ошибка при загрузке кошелька:", err)
+		return
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 
