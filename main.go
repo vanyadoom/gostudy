@@ -26,7 +26,8 @@ func main() {
 		fmt.Printf("\n🪙 КРИПТО-КОШЕЛЕК [%s] | Баланс: $%.2f\n", myWallet.Owner, myWallet.Balance)
 		fmt.Println("1. Пополнить кошелек")
 		fmt.Println("2. Снять деньги")
-		fmt.Println("3. Выход")
+		fmt.Println("3. Показать история транзакций")
+		fmt.Println("4. Выход")
 		fmt.Print("Выберите действие: ")
 
 		scanner.Scan()
@@ -62,6 +63,23 @@ func main() {
 			}
 
 		case "3":
+			fmt.Println("\n📜 ИСТОРИЯ ТРАНЗАКЦИЙ:")
+
+			if len(myWallet.History) == 0 {
+				fmt.Println("📭 История пуста. Вы еще не совершали операций.")
+				continue
+			}
+
+			fmt.Println(strings.Repeat("-", 60))
+
+			for _, tx := range myWallet.History {
+				dateStr := tx.Date.Format("2006-01-02 15:04:05")
+
+				fmt.Printf("[%s] %s: $%.2f\n", dateStr, tx.Type, tx.Amount)
+			}
+			fmt.Println(strings.Repeat("-", 60))
+
+		case "4":
 			fmt.Println("👋 До встречи в Wallet CLI!")
 			return
 
