@@ -10,6 +10,11 @@ import (
 	"gostudy/notifier"
 )
 
+var (
+	ErrInsufficientFunds = errors.New("недостаточно средств на балансе данной валюты")
+	ErrInvalidAmount     = errors.New("сумма операции должна быть больше нуля")
+)
+
 type Transaction struct {
 	Type     string
 	Currency string
@@ -30,7 +35,7 @@ func NewWallet(owner string, filename string, n notifier.Notifier) *Wallet {
 		filename: filename,
 		notifier: n,
 		Owner:    owner,
-		Balances: make(map[string]float64), // Выделяем память под карту
+		Balances: make(map[string]float64),
 		History:  []Transaction{},
 	}
 }
@@ -50,16 +55,19 @@ func (w *Wallet) Load() error {
 		w.Balances["RUB"] = 5000.0
 		return w.Save()
 	}
-
 	data, err := os.ReadFile(w.filename)
 	if err != nil {
 		return err
 	}
-
 	return json.Unmarshal(data, w)
 }
 
-func (w *Wallet) Deposit(currency string, amount float64) {
+func (w *Wallet) Deposit(currency string, amount float64) error {
+	// Валидацию суммы переносим внутрь движка (защита ядра кошелька)
+	if amount <= 0 {
+		return ErrInvalidAmount
+	}
+
 	w.Balances[currency] += amount
 
 	tx := Transaction{
@@ -68,19 +76,26 @@ func (w *Wallet) Deposit(currency string, amount float64) {
 		Amount:   amount,
 		Date:     time.Now(),
 	}
-
 	w.History = append(w.History, tx)
 
-	_ = w.Save()
+	if err := w.Save(); err != nil {
+		return fmt.Errorf("ошибка сохранения базы данных: %w", err)
+	}
 
 	msg := fmt.Sprintf("Баланс пополнен на %.2f %s. Новый баланс: %.2f %s", amount, currency, w.Balances[currency], currency)
 	w.notifier.Send(msg)
+
+	return nil
 }
 
-func (w *Wallet) Withdraw(currency string, amount float64) bool {
+func (w *Wallet) Withdraw(currency string, amount float64) error {
+	if amount <= 0 {
+		return ErrInvalidAmount
+	}
+
 	currentBalance := w.Balances[currency]
 	if amount > currentBalance {
-		return false
+		return ErrInsufficientFunds
 	}
 
 	w.Balances[currency] -= amount
@@ -92,10 +107,13 @@ func (w *Wallet) Withdraw(currency string, amount float64) bool {
 		Date:     time.Now(),
 	}
 	w.History = append(w.History, tx)
-	_ = w.Save()
 
-	msg := fmt.Sprintf("Со счёта снято %.2f %s. Новый баланс: %.2f %s", amount, currency, w.Balances[currency], currency)
+	if err := w.Save(); err != nil {
+		return fmt.Errorf("ошибка сохранения базы данных: %w", err)
+	}
+
+	msg := fmt.Sprintf("Со счета снято %.2f %s. Остаток: %.2f %s", amount, currency, w.Balances[currency], currency)
 	w.notifier.Send(msg)
 
-	return true
+	return nil
 }

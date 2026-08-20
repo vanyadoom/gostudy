@@ -13,13 +13,20 @@ import (
 
 func main() {
 	tgBot := notifier.TelegramNotifier{Username: "vanya_crypto_bot"}
-
 	myWallet := wallet.NewWallet("Иван", "wallet.json", tgBot)
 
 	err := myWallet.Load()
 	if err != nil {
 		fmt.Println("❌ Критическая ошибка при загрузке кошелька:", err)
 		return
+	}
+
+	// 🔥 НОВАЯ КАРТА СИМВОЛОВ ВАЛЮТ:
+	// Связываем трехбуквенный код с красивым графическим знаком [INDEX]
+	currencySymbols := map[string]string{
+		"USD": "$",
+		"EUR": "€",
+		"RUB": "₽",
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -29,7 +36,10 @@ func main() {
 		fmt.Println("💰 Текущие балансы:")
 
 		for curr, bal := range myWallet.Balances {
-			fmt.Printf("   • %s: $%.2f\n", curr, bal)
+			// Достаем из нашей карты правильный символ.
+			// Если вдруг придет неизвестная валюта, Go выдаст пустую строку "", поэтому пишем код надежно
+			symbol := currencySymbols[curr]
+			fmt.Printf("   • %s: %s%.2f\n", curr, symbol, bal) // 🔥 Заменили статичный $ на динамический символ
 		}
 
 		fmt.Println("\nМеню:")
@@ -57,11 +67,11 @@ func main() {
 			scanner.Scan()
 			amount, _ := strconv.ParseFloat(strings.TrimSpace(scanner.Text()), 64)
 
-			if amount > 0 {
-				myWallet.Deposit(currency, amount)
-				fmt.Println("✅ Кошелек успешно пополнен!")
+			err := myWallet.Deposit(currency, amount)
+			if err != nil {
+				fmt.Printf("❌ Ошибка выполнения: %v\n", err)
 			} else {
-				fmt.Println("❌ Ошибка: Сумма должна быть больше нуля")
+				fmt.Println("✅ Кошелек успешно пополнен!")
 			}
 
 		case "2":
@@ -78,14 +88,11 @@ func main() {
 			scanner.Scan()
 			amount, _ := strconv.ParseFloat(strings.TrimSpace(scanner.Text()), 64)
 
-			if amount > 0 {
-				if myWallet.Withdraw(currency, amount) {
-					fmt.Println("✅ Деньги успешно сняты!")
-				} else {
-					fmt.Println("❌ Ошибка: Недостаточно средств на балансе данной валюты!")
-				}
+			err := myWallet.Withdraw(currency, amount)
+			if err != nil {
+				fmt.Printf("❌ Ошибка выполнения: %v\n", err)
 			} else {
-				fmt.Println("❌ Ошибка: Сумма должна быть больше нуля")
+				fmt.Println("✅ Деньги успешно сняты!")
 			}
 
 		case "3":
@@ -98,7 +105,9 @@ func main() {
 			fmt.Println(strings.Repeat("-", 60))
 			for _, tx := range myWallet.History {
 				dateStr := tx.Date.Format("2006-01-02 15:04:05")
-				fmt.Printf("[%s] %s: %.2f %s\n", dateStr, tx.Type, tx.Amount, tx.Currency)
+				// Подставляем правильный символ валюты и в историю транзакций [INDEX]
+				symbol := currencySymbols[tx.Currency]
+				fmt.Printf("[%s] %s: %s%.2f\n", dateStr, tx.Type, symbol, tx.Amount)
 			}
 			fmt.Println(strings.Repeat("-", 60))
 
