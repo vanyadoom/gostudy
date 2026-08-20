@@ -1,8 +1,6 @@
 # 🪙 Wallet CLI — Мультивалютный Крипто-Кошелек на Go
 
 [![Go Version](https://shields.io)](https://golang.org)
-[![Licence](https://shields.io)](LICENSE)
-[![Architecture](https://shields.io)](https://github.com)
 
 Интерактивное консольное приложение (CLI) для управления мультивалютными активами. Проект разработан в рамках изучения продвинутых концепций языка Go (Golang), включая асинхронность, интерфейсы, каналы и модульное тестирование.
 
