@@ -21,8 +21,12 @@ func main() {
 		return
 	}
 
-	// 🔥 НОВАЯ КАРТА СИМВОЛОВ ВАЛЮТ:
-	// Связываем трехбуквенный код с красивым графическим знаком [INDEX]
+	// 🔥 МАГИЯ МНОГОПОТОЧНОСТИ GO (ГОРУТИНА):
+	// Мы пишем слово `go` перед вызовом метода [INDEX].
+	// Теперь этот робот улетает работать параллельно в фоновом режиме [INDEX]!
+	// Он будет засыпать и просыпаться каждые 15 секунд, никак не мешая циклу меню ниже [INDEX].
+	go myWallet.StartBackgroundAuditor()
+
 	currencySymbols := map[string]string{
 		"USD": "$",
 		"EUR": "€",
@@ -36,10 +40,8 @@ func main() {
 		fmt.Println("💰 Текущие балансы:")
 
 		for curr, bal := range myWallet.Balances {
-			// Достаем из нашей карты правильный символ.
-			// Если вдруг придет неизвестная валюта, Go выдаст пустую строку "", поэтому пишем код надежно
 			symbol := currencySymbols[curr]
-			fmt.Printf("   • %s: %s%.2f\n", curr, symbol, bal) // 🔥 Заменили статичный $ на динамический символ
+			fmt.Printf("   • %s: %s%.2f\n", curr, symbol, bal)
 		}
 
 		fmt.Println("\nМеню:")
@@ -105,7 +107,6 @@ func main() {
 			fmt.Println(strings.Repeat("-", 60))
 			for _, tx := range myWallet.History {
 				dateStr := tx.Date.Format("2006-01-02 15:04:05")
-				// Подставляем правильный символ валюты и в историю транзакций [INDEX]
 				symbol := currencySymbols[tx.Currency]
 				fmt.Printf("[%s] %s: %s%.2f\n", dateStr, tx.Type, symbol, tx.Amount)
 			}
