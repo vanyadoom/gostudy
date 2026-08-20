@@ -1,4 +1,4 @@
-package main // Наш главный пакет приложения
+package main
 
 import (
 	"bufio"
@@ -7,27 +7,27 @@ import (
 	"strconv"
 	"strings"
 
-	"gostudy/wallet" // Импортируем наш пакет кошелька
+	"gostudy/notifier"
+	"gostudy/wallet"
 )
 
 func main() {
-	// Создаем кошелек Ивана (стартовые балансы теперь задаются внутри Load, если файла нет)
-	myWallet := wallet.NewWallet("Иван", "wallet.json") // 🔥 ВОТ ЭТУ СТРОЧКУ НУЖНО ВЕРНУТЬ!
+	tgBot := notifier.TelegramNotifier{Username: "vanya_crypto_bot"}
 
-	err := myWallet.Load() // Теперь всё отлично, myWallet существует!
+	myWallet := wallet.NewWallet("Иван", "wallet.json", tgBot)
+
+	err := myWallet.Load()
 	if err != nil {
-
 		fmt.Println("❌ Критическая ошибка при загрузке кошелька:", err)
 		return
 	}
 
-	scanner := bufio.NewScanner(os.Stdin) // Сканер для чтения консоли
+	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Printf("\n🪙 КРИПТО-КОШЕЛЕК [%s]\n", myWallet.Owner)
 		fmt.Println("💰 Текущие балансы:")
 
-		// 🔥 МАГИЯ MAP: Перебираем карту. На каждом круге получаем имя валюты (curr) и баланс (bal) [INDEX]
 		for curr, bal := range myWallet.Balances {
 			fmt.Printf("   • %s: $%.2f\n", curr, bal)
 		}
@@ -48,10 +48,9 @@ func main() {
 			scanner.Scan()
 			currency := strings.ToUpper(strings.TrimSpace(scanner.Text()))
 
-			// 🔥 ЗАЩИТА: Проверяем, входит ли введенная строка в список разрешенных
 			if currency != "USD" && currency != "EUR" && currency != "RUB" {
 				fmt.Println("❌ Ошибка: Поддерживаются только валюты USD, EUR и RUB!")
-				continue // Прерываем этот шаг и возвращаем пользователя в начало меню
+				continue
 			}
 
 			fmt.Print("Введите сумму для пополнения: ")
@@ -70,7 +69,6 @@ func main() {
 			scanner.Scan()
 			currency := strings.ToUpper(strings.TrimSpace(scanner.Text()))
 
-			// 🔥 ЗАЩИТА: Такая же проверка для снятия денег
 			if currency != "USD" && currency != "EUR" && currency != "RUB" {
 				fmt.Println("❌ Ошибка: Поддерживаются только валюты USD, EUR и RUB!")
 				continue
@@ -100,7 +98,6 @@ func main() {
 			fmt.Println(strings.Repeat("-", 60))
 			for _, tx := range myWallet.History {
 				dateStr := tx.Date.Format("2006-01-02 15:04:05")
-				// В выводе истории теперь тоже красиво подсвечиваем валюту операции
 				fmt.Printf("[%s] %s: %.2f %s\n", dateStr, tx.Type, tx.Amount, tx.Currency)
 			}
 			fmt.Println(strings.Repeat("-", 60))
