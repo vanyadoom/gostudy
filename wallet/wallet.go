@@ -40,34 +40,32 @@ func NewWallet(owner string, filename string, n notifier.Notifier) *Wallet {
 	}
 }
 
-// 🔥 НОВЫЙ МЕТОД: Фоновый аудитор.
-// Этот метод будет запущен как ОТДЕЛЬНАЯ ГОРУТИНА параллельно с меню!
-func (w *Wallet) StartBackgroundAuditor() {
-	// Запускаем бесконечный фоновый цикл робота [INDEX]
+// 🔥 ОБНОВЛЕННЫЙ МЕТОД: Теперь он принимает канал `chan string` на вход.
+func (w *Wallet) StartBackgroundAuditor(adviceChan chan string) {
 	for {
-		// Заставляем робота поспать 15 секунд, чтобы он не грузил процессор непрерывно [INDEX]
-		time.Sleep(2 * time.Minute)
+		time.Sleep(1 * time.Minute)
 
 		var totalUSDEquivalent float64
 		for curr, bal := range w.Balances {
-			// 🔥 ЗАМЕНИЛИ IF НА SWITCH: Код стал чистым, синяя линия исчезнет! [INDEX]
 			switch curr {
 			case "RUB":
-				totalUSDEquivalent += bal / 100.0 // Переводим рубли в доллары [INDEX]
+				totalUSDEquivalent += bal / 100.0
 			case "EUR":
-				totalUSDEquivalent += bal * 1.1 // Переводим евро в доллары [INDEX]
+				totalUSDEquivalent += bal * 1.1
 			default:
-				totalUSDEquivalent += bal // Доллары считаем как есть
+				totalUSDEquivalent += bal
 			}
 		}
 
-		// Робот делает фоновый анализ и выводит совет прямо в консоль [INDEX]
-		fmt.Print("\n🤖 [ФОНОВЫЙ АУДИТОР]: Анализирую ваши активы... ")
+		// Формируем текст совета
+		var msg string
 		if totalUSDEquivalent > 200 {
-			fmt.Printf("У вас солидный капитал (~$%.2f). Подумайте об инвестициях!\n", totalUSDEquivalent)
+			msg = fmt.Sprintf("🤖 [АУДИТОР]: У вас солидный капитал (~$%.2f). Подумайте об инвестициях!", totalUSDEquivalent)
 		} else {
-			fmt.Printf("Ваш капитал скромный (~$%.2f). Рекомендуем пополнить счет.\n", totalUSDEquivalent)
+			msg = fmt.Sprintf("🤖 [АУДИТОР]: Ваш капитал скромный (~$%.2f). Рекомендуем пополнить счет.", totalUSDEquivalent)
 		}
+
+		adviceChan <- msg
 	}
 }
 

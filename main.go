@@ -21,11 +21,18 @@ func main() {
 		return
 	}
 
-	// 🔥 МАГИЯ МНОГОПОТОЧНОСТИ GO (ГОРУТИНА):
-	// Мы пишем слово `go` перед вызовом метода [INDEX].
-	// Теперь этот робот улетает работать параллельно в фоновом режиме [INDEX]!
-	// Он будет засыпать и просыпаться каждые 15 секунд, никак не мешая циклу меню ниже [INDEX].
-	go myWallet.StartBackgroundAuditor()
+	// 🔥 МАГИЯ КАНАЛОВ (Шаг 1): Создаем трубу-канал для передачи текстовых сообщений string [INDEX]
+	adviceChannel := make(chan string)
+
+	// 🔥 МАГИЯ КАНАЛОВ (Шаг 2): Запускаем робота в горутине и передаем ему этот канал [INDEX].
+	// Теперь робот будет скидывать советы в эту трубу, не мешая нашей клавиатуре [INDEX].
+	go myWallet.StartBackgroundAuditor(adviceChannel)
+
+	go func() {
+		for msg := range adviceChannel {
+			fmt.Printf("\n\n📩 СВЕЖЕЕ УВЕДОМЛЕНИЕ: %s\nВыберите действие: ", msg)
+		}
+	}()
 
 	currencySymbols := map[string]string{
 		"USD": "$",
@@ -36,6 +43,16 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
+		// 🔥 МАГИЯ КАНАЛОВ (Шаг 3): Проверяем канал БЕЗ БЛОКИРОВКИ интерфейса [INDEX].
+		// Конструкция select моментально заглядывает в трубу [INDEX].
+		select {
+		case msg := <-adviceChannel: // Если робот закинул сообщение — вытаскиваем его из канала [INDEX]
+			fmt.Printf("\n📩 СВЕЖЕЕ УВЕДОМЛЕНИЕ: %s\n", msg)
+		default:
+			// Блок default обязателен [INDEX]! Если в канале пусто, Go просто проскакивает мимо
+			// и мгновенно переходит к показу меню, не заставляя пользователя ждать [INDEX].
+		}
+
 		fmt.Printf("\n🪙 КРИПТО-КОШЕЛЕК [%s]\n", myWallet.Owner)
 		fmt.Println("💰 Текущие балансы:")
 
